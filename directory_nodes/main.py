@@ -1,9 +1,13 @@
 #!/bin/python3
 
 from uvicorn import run
+from sys import argv
 
 import directory_node
 
+IP = argv[1]
+PORT = 8000
 
 if __name__ == "__main__":
-    run("directory_node:app", host=directory_node.IP, port=directory_node.PORT, reload=True, workers=1)
+    print("Starting DIRECTORY NODE AT IP", IP, "PORT", PORT)
+    run("directory_node:app", host=IP, port=PORT, reload=True, workers=1)

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+
+# PLAYERS
+
+# DIRECTORY NODES x 2
+# GUARD RELAYS x 2
+# MIDDLE RELAYS x 2
+# EXIT RELAYS x 2
+# SERVER x 1
+# CLIENT x 1
+
+
+# IP ASSIGNMENTS
+# DIRECTORY NODE 1: 192.168.10.10
+# DIRECTORY NODE 2: 192.168.10.11
+# GUARD RELAY 1: 192.168.10.12
+# GUARD RELAY 2: 192.168.10.13
+# MIDDLE RELAY 1: 192.168.10.14
+# MIDDLE RELAY 2: 192.168.10.15
+# EXIT RELAY 1: 192.168.10.16
+# EXIT RELAY 2: 192.168.10.17
+# SERVER: 192.168.10.18
+# CLIENT: 192.168.10.19
+
+
+# free up these IPs if busy
+for i in $(seq 10 19)
+do
+    ifconfig wlan0:$i 192.168.10.$i down;
+done
+
+
+# set up IPs for nodes
+for i in $(seq 10 19)
+do
+    ifconfig wlan0:$i 192.168.10.$i up;
+done
+
+
+# START SERVICES NOW
+
+# start directory node 1
+python3 ./directory_nodes/main.py 192.168.10.10 &
+# start directory node 2
+python3 ./directory_nodes/main.py 192.168.10.11
