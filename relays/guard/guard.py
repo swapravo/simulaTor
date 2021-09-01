@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import post
+import main
+
 
 # these IPs & their public keys are pinned into the tor client
-#DIRECTORY_NODES = ["192.168.10.10", "192.168.10.11"]
-DIRECTORY_NODES = ["192.168.10.10"]
-
-IP = "192.168.10.13"
-PORT = 8000
-RELAY_TYPE = "gaurd"
+DIRECTORY_NODES = ["192.168.10.10", "192.168.10.11"]
+DIRECTORY_NODE_PORT = 8000
+IP = main.IP
+RELAY_TYPE = "guard"
 
 app = FastAPI(
     #debug=True,
@@ -20,10 +20,10 @@ app = FastAPI(
 def register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE}
     for directory_node in DIRECTORY_NODES:
-        response = post("http://" + directory_node + ':' + str(PORT) + "/register_relay", params=post_data)
+        response = post("http://" + directory_node + ':' + str(DIRECTORY_NODE_PORT) + "/register_relay", params=post_data)
 
 
-@app.get("/home", response_class=PlainTextResponse)
+@app.get("/register", response_class=PlainTextResponse)
 async def home():
     register()
-    return ""
+    return "registered!"

@@ -29,8 +29,6 @@ for i in $(seq 10 19)
 do
     ifconfig wlan0:$i 192.168.10.$i down;
 done
-
-
 # set up IPs for nodes
 for i in $(seq 10 19)
 do
@@ -43,4 +41,23 @@ done
 # start directory node 1
 python3 ./directory_nodes/main.py 192.168.10.10 &
 # start directory node 2
-python3 ./directory_nodes/main.py 192.168.10.11
+python3 ./directory_nodes/main.py 192.168.10.11 &
+
+# start gaurd relay 1
+python3 relays/guard/main.py 192.168.10.12 &
+# start gaurd relay 2
+python3 relays/guard/main.py 192.168.10.13 &
+
+# start middle relay 1
+python3 relays/middle/main.py 192.168.10.14 &
+# start middle relay 2
+python3 relays/middle/main.py 192.168.10.15 &
+
+# start exit relay 1
+python3 relays/exit/main.py 192.168.10.16 &
+# start exit relay 2
+python3 relays/exit/main.py 192.168.10.17
+
+
+echo Killing Subprocesses!
+pkill -P $$

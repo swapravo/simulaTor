@@ -4,8 +4,10 @@ IPs for directory nodes: 192.168.10.10, 192.168.10.11
 
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
+import main
 
 registered_relays = []
+IP = main.IP
 
 app = FastAPI(
     #debug=True,
