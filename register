@@ -1,0 +1,23 @@
+#!/bin/bash
+
+PORT=8000
+
+# register gaurd relay 1, 2 to the directory node
+curl -v "http://192.168.10.12:$PORT/register"
+curl -v "http://192.168.10.13:$PORT/register"
+
+# register middle relay 1, 2 to the directory node
+curl -v "http://192.168.10.14:$PORT/register"
+curl -v "http://192.168.10.15:$PORT/register"
+
+# register exit relay 1, 2 to the directory node
+curl -v "http://192.168.10.16:$PORT/register"
+curl -v "http://192.168.10.17:$PORT/register"
+
+
+# make the client fetch all relays that are online
+curl -v "http://192.168.10.19:$PORT/get_relays"
+
+# make the client create a circuit 
+curl -v "http://192.168.10.19:$PORT/handshake"
+curl -v "http://192.168.10.19:$PORT/bootstrap"

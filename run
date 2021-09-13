@@ -56,7 +56,13 @@ python3 relays/middle/main.py 192.168.10.15 &
 # start exit relay 1
 python3 relays/exit/main.py 192.168.10.16 &
 # start exit relay 2
-python3 relays/exit/main.py 192.168.10.17
+python3 relays/exit/main.py 192.168.10.17 &
+
+# start server
+#python3 servers/main.py 192.168.10.18 &
+
+# start client
+python3 clients/main.py 192.168.10.19
 
 
 echo Killing Subprocesses!

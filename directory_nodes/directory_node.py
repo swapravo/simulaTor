@@ -4,7 +4,9 @@ IPs for directory nodes: 192.168.10.10, 192.168.10.11
 
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
+
 import main
+
 
 registered_relays = []
 IP = main.IP
@@ -17,11 +19,13 @@ app = FastAPI(
 )
 
 
-#curl -v -X POST 'http://127.0.0.1:8000/register_relay?ip=127.0.0.1'
 @app.post("/register_relay")
-async def post_register_relay(ip: str, relay_type: str):
+async def post_register_relay(ip: str, relay_type: str, public_key: str):
     #validate response
-    registered_relays.append([ip, relay_type])
+    relay = [relay_type, ip, public_key]
+
+    if relay not in registered_relays:
+        registered_relays.append(relay)
 
 
 @app.get("/get_relays", response_class=PlainTextResponse)
