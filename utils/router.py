@@ -11,7 +11,6 @@ class router:
     SERVER_IP = None
     SERVER_PORT = 8001
 
-    DATA = None
     BUFFER_SIZE = 512
 
     def __init__(self, ip):
@@ -40,13 +39,22 @@ class router:
             print("Got connection: ", self.CLIENT, self.CLIENT_ADDRESS)
 
         while True:
-            self.data = self.CLIENT.recv(self.BUFFER_SIZE)
-            print(self.NAME, " Router recieved:", self.data)
-            if not self.data:
+            self.request = self.CLIENT.recv(self.BUFFER_SIZE)
+            print(self.NAME, " Router recieved:", self.request)
+            if not self.request:
                 print("No data recieved. Closing socket!")
                 break
-            # send request
+
+            # forward request
             self.forward()
+            # fetch reply
+            self.fetch()
+            # send reply back
+            self.CLIENT.send(self.response)
+            if not self.response:
+                print("No data recieved. Closing socket!")
+                break
+
 
     # connect to the next router on the network
     def connect(self, server_ip):
@@ -58,4 +66,9 @@ class router:
     # do crypto & forward the data to the next router
     def forward(self):
         # do_crypto()
-        self.SERVER_SOCKET.send(self.data)
+        self.SERVER_SOCKET.send(self.request)
+
+    def fetch(self):
+        self.response = self.SERVER_SOCKET.recv(8)
+        print("reply")
+        print(self.response)

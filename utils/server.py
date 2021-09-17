@@ -1,4 +1,3 @@
-'''
 import socket
 
 connection = socket.socket()
@@ -46,3 +45,5 @@ while True:
     print(message)
     if not message:
         break
+    connection.send(b'98765432')
+'''

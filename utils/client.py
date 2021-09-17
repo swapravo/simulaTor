@@ -1,9 +1,8 @@
-'''
 import socket
 
 connection = socket.socket()
 
-SERVER_IP = "192.168.10.13"
+SERVER_IP = "192.168.10.10"
 SERVER_PORT = 8001
 HELLO = "HELLO".encode()
 
@@ -39,3 +38,5 @@ connection.connect((SERVER_IP, SERVER_PORT))
 while True:
     connection.send(b'12345678')
     time.sleep(1)
+    print(connection.recv(8))
+'''
