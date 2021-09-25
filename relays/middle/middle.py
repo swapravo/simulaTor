@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
 from base64 import b64encode
+import time
+import subprocess
 
 import main
-from utils import crypto, utils
+from utils import crypto, utils, router
 
 
 # these IPs & their public keys are pinned into the tor client
@@ -23,14 +25,17 @@ app = FastAPI(
 )
 
 
-@app.get("/register", response_class=PlainTextResponse)
-async def get_register():
+# register yourself to the directory nodes
+#@app.get("/register", response_class=PlainTextResponse)
+def get_register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     for directory_node in DIRECTORY_NODES:
         response = post("http://" + directory_node + ':' + str(DIRECTORY_NODE_PORT) + "/register_relay", params=post_data)
 
     return "Registered! as IP:" + str(IP) + ' as RELAY TYPE:' + RELAY_TYPE + '\n'
 
+
+# host your public key
 @app.get("/public_key", response_class=PlainTextResponse)
 async def get_public_key():
     return utils.encode(bytes(PUBLIC_KEY))
@@ -45,6 +50,18 @@ async def post_handshake(ip: str, public_key: str):
 
     _relay = utils.Relay(ip=ip, public_key=public_key, symmetric_key=symmetric_key, relay_type='guard')
     connected_clients[ip] = _relay
+
+    #print("at middle")
+    #print("Relay handshake completed:")
+    #_relay.display()
+
+
+def launch_router(server_ip):
+    print("entering launch router from middle")
+    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    print("exiting launch router from middle")  
+    # give the router some time to start up
+    time.sleep(3)
 
 
 # create circuit
@@ -72,8 +89,6 @@ async def post_bootsrap(ip: str, data: str):
 
         # deserialise data
         next_server, data = utils.deserialise(data)
-        print("At middle:")
-        print(next_server, data)
 
         connected_clients[ip].next_server = next_server
         # Now exchange keys/handshake with the exit relay
@@ -108,3 +123,14 @@ async def post_bootsrap(ip: str, data: str):
         # bootstrap with the middle relay
         post_data = {"ip": IP, "data": data}
         response = post("http://" + connected_clients[ip].next_server + ":8000/bootstrap", params=post_data)
+
+
+        #print("AT MIDDLE")
+        #for i in connected_clients:
+        #    connected_clients[i].display()
+        launch_router(connected_clients[ip].next_server)
+        print("leaving middle relay ")
+
+
+time.sleep(5)
+get_register()

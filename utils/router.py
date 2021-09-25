@@ -59,8 +59,9 @@ class router:
     # connect to the next router on the network
     def connect(self, server_ip):
         self.SERVER_IP = server_ip
+        print("Connecting to ", self.SERVER_IP, "from", self.ROUTER_IP, "...")
         self.SERVER_SOCKET.connect((self.SERVER_IP, self.SERVER_PORT))
-        print("connected to ", self.SERVER_IP, "from", self.ROUTER_IP)
+        print("Connected to ", self.SERVER_IP, "from", self.ROUTER_IP)
 
 
     # do crypto & forward the data to the next router
@@ -72,3 +73,9 @@ class router:
         self.response = self.SERVER_SOCKET.recv(8)
         print("reply")
         print(self.response)
+
+
+#print("args supplied")
+#print(args)
+
+#r = router(argv[2])

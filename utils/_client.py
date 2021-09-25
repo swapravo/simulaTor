@@ -1,3 +1,4 @@
+'''
 import socket
 
 connection = socket.socket()
@@ -30,13 +31,14 @@ while True:
 
 import socket, time
 
-connection = socket.socket()
-SERVER_IP = "192.168.10.10"
-SERVER_PORT = 8001
-connection.connect((SERVER_IP, SERVER_PORT))
+def f():
+    connection = socket.socket()
+    SERVER_IP = "192.168.10.10"
+    SERVER_PORT = 8001
+    connection.connect((SERVER_IP, SERVER_PORT))
 
-while True:
-    connection.send(b'12345678')
-    time.sleep(1)
-    print(connection.recv(8))
-'''
+    while True:
+        connection.send(b'12345678')
+        time.sleep(1)
+        print(connection.recv(8))
+

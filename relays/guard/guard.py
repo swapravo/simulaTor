@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
 from base64 import b64encode
+import time
+import subprocess
 
 import main
-from utils import crypto, utils
+from utils import crypto, utils, router
 
 
 # these IPs & their public keys are pinned into the tor client
@@ -25,8 +27,8 @@ app = FastAPI(
 
 
 # register yourself to the directory nodes
-@app.get("/register", response_class=PlainTextResponse)
-async def get_register():
+#@app.get("/register", response_class=PlainTextResponse)
+def get_register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     for directory_node in DIRECTORY_NODES:
         response = post("http://" + directory_node + ':' + str(DIRECTORY_NODE_PORT) + "/register_relay", params=post_data)
@@ -49,6 +51,18 @@ async def post_handshake(ip: str, public_key: str):
     client = utils.Client(ip=ip, public_key=public_key, symmetric_key=symmetric_key)
     connected_clients[ip] = client
 
+    #print("At guard")
+    #print("Client handshake completed:")
+    #client.display()
+
+
+def launch_router(server_ip):
+    print("entering launch router from guard")
+    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    print("exiting launch router from guard")  
+    # give the router some time to start up
+    time.sleep(3)
+
 
 # create circuit
 @app.post("/bootstrap", response_class=PlainTextResponse)
@@ -63,11 +77,12 @@ async def post_bootsrap(ip: str, data: str):
         data = crypto.decrypt(connected_clients[ip].symmetric_key, data)
 
         # deserialise data
+        #print("data to be deserialised:", data)
         next_server, data = utils.deserialise(data)
         connected_clients[ip].next_server = next_server
 
-        print("At guard:")
-        print(next_server, data)
+        #print("At guard:")
+        #print(next_server, data)
 
         # Now exchange keys/handshake with the middle relay
 
@@ -101,3 +116,12 @@ async def post_bootsrap(ip: str, data: str):
         # bootstrap with the middle relay
         post_data = {"ip": IP, "data": data}
         response = post("http://" + connected_clients[ip].next_server + ":8000/bootstrap", params=post_data)
+
+        #print("AT GUARD")
+        #for i in connected_clients:
+        #    connected_clients[i].display()
+        launch_router(connected_clients[ip].next_server)
+        print("leaving guard relay")
+
+time.sleep(5)
+get_register()

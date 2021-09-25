@@ -10,5 +10,5 @@ PORT = 8000
 
 if __name__ == "__main__":
     print("Starting DIRECTORY NODE at IP", IP, "PORT", PORT)
-    run("directory_node:app", host=IP, port=PORT, reload=True, workers=1)
+    run("directory_node:app", host=IP, port=PORT, reload=True, workers=1, log_level="error")
     print("Stopped DIRECTORY NODE at IP", IP, "PORT", PORT)

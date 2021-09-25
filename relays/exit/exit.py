@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
 from base64 import b64encode
+import time
+import subprocess
 
 import main
-from utils import crypto, utils
+from utils import crypto, utils, router
 
 
 # these IPs & their public keys are pinned into the tor client
@@ -22,14 +24,24 @@ app = FastAPI(
     #openapi_url=None,
 )
 
-
-@app.get("/register", response_class=PlainTextResponse)
-async def get_register():
+# register yourself to the directory nodes
+#@app.get("/register", response_class=PlainTextResponse)
+def get_register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     for directory_node in DIRECTORY_NODES:
         response = post("http://" + directory_node + ':' + str(DIRECTORY_NODE_PORT) + "/register_relay", params=post_data)
     return "Registered! as IP:" + str(IP) + ' as RELAY TYPE:' + RELAY_TYPE + '\n'
 
+
+def launch_router(server_ip):
+    print("entering launch router from exit")
+    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    print("exiting launch router from exit")  
+    # give the router some time to start up
+    time.sleep(3)
+
+
+# host your public key
 @app.get("/public_key", response_class=PlainTextResponse)
 async def get_public_key():
     return utils.encode(bytes(PUBLIC_KEY))
@@ -42,8 +54,12 @@ async def post_handshake(ip: str, public_key: str):
     public_key = crypto.decode_public_key(public_key)
     symmetric_key = crypto.generate_shared_secret(PRIVATE_KEY, public_key)
 
-    _relay = utils.Relay(ip=ip, public_key=public_key, symmetric_key=symmetric_key, relay_type='guard')
+    _relay = utils.Relay(ip=ip, public_key=public_key, symmetric_key=symmetric_key, relay_type='middle') # only middle relays connect to exit relays
     connected_clients[ip] = _relay
+
+    #print("at exit")
+    #print("Relay handshake completed:")
+    #_relay.display()
 
 
 # create circuit
@@ -66,8 +82,18 @@ async def post_bootsrap(ip: str, data: str):
         # remember this client's keys
         _client = utils.Client(public_key=_public_key, symmetric_key=_symmetric_key)
 
-        data = crypto.decrypt(_client.symmetric_key, data)
 
-        print(data)
-        #print(utils.deserialise(data))
+        # server that the client wants to connect to
+        data = crypto.decrypt(_client.symmetric_key, data).decode()
 
+
+        #print("AT EXIT")
+        #print(data)
+        #for i in connected_clients:
+        #    connected_clients[i].display()
+        launch_router(data)
+        print("leaving exit relay")
+
+
+time.sleep(5)
+get_register()

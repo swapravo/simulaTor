@@ -8,7 +8,8 @@ from fastapi.responses import PlainTextResponse
 import main
 
 
-registered_relays = []
+registered_relays = {}
+
 IP = main.IP
 
 app = FastAPI(
@@ -23,12 +24,15 @@ app = FastAPI(
 async def post_register_relay(ip: str, relay_type: str, public_key: str):
     #validate response
     relay = [relay_type, ip, public_key]
-
-    if relay not in registered_relays:
-        registered_relays.append(relay)
+    registered_relays[ip] = relay
 
 
 @app.get("/get_relays", response_class=PlainTextResponse)
 async def get_get_relays():
+    relay_data = []
     # ip1:public_key1\nip2:public_key2...
-    return '\n'.join(':'.join(i) for i in registered_relays)
+    #return '\n'.join(':'.join(i) for i in registered_relays)
+    #return str(registered_relays)
+    for i in registered_relays:
+        relay_data.append(':'.join(registered_relays[i]))
+    return '\n'.join(relay_data)

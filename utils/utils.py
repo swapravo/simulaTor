@@ -10,11 +10,11 @@ class Client:
         self.next_server = next_server
 
     def display(self):
-        print()
         print("IP: ", self.ip)
         print("Public Key: ", self.public_key)
         print("Symmetric Key: ", self.symmetric_key)
         print("Next Server: ", self.next_server)
+        print()
 
     def __eq__(self, other):
         return self.ip == other.ip and self.public_key == other.public_key and self.symmetric_key == other.symmetric_key and self.next_server == other.next_server
@@ -29,8 +29,8 @@ class Relay(Client):
                 raise ValueError
 
     def display(self):
-        super().display()
         print("Relay Type: ", self.relay_type)
+        super().display()
 
     #TODO FIX THIS
     def __eq__(self, other):

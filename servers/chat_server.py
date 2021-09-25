@@ -32,9 +32,11 @@ import socket
 
 connection = socket.socket()
 
-SERVER_IP = "192.168.10.18"
+SERVER_IP = "192.168.10.25"
 SERVER_PORT = 8001
 connection.bind((SERVER_IP, SERVER_PORT))
+
+print("Server running...")
 
 connection.listen(1)
 connection, addr = connection.accept()

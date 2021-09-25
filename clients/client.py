@@ -1,16 +1,17 @@
-from fastapi import FastAPI
-from fastapi.responses import PlainTextResponse
 from requests import get, post
 import random
+import socket
+import time
 
-import main
 from utils import crypto, utils
+import chat_client
 
 
 # these IPs & their public keys are pinned into the tor client
 DIRECTORY_NODES = ["192.168.10.10", "192.168.10.11"]
-DIRECTORY_NODE_PORT = 8000
-IP = main.IP
+CONTROL_PORT = 8000
+DATA_PORT = 8001
+IP = "192.168.10.27"
 PUBLIC_KEY, PRIVATE_KEY = crypto.generate_asymmetric_keys()
 
 relays = {
@@ -23,31 +24,15 @@ circuit = {
     'middle': None,
     'exit': None
     }
-app = FastAPI(
-    #debug=True,
-    #docs_url=None,
-    #redoc_url=None,
-    #openapi_url=None,
-    )
-
-def choose_relays():
-    global circuit
-
-    try:
-        circuit['guard'] = random.choice(relays['guard'])
-        circuit['middle'] = random.choice(relays['middle'])
-        circuit['exit'] = random.choice(relays['exit'])
-    except IndexError:
-        print("No relays found!")
 
 
-@app.get("/get_relays", response_class=PlainTextResponse)
-async def get_get_relays():
+# fetch relay info from directory nodes
+def get_relays():
     global relays
     available_relays = []
 
     for directory_node in DIRECTORY_NODES:
-        request = get("http://" + directory_node + ':' + str(DIRECTORY_NODE_PORT) + "/get_relays")
+        request = get("http://" + directory_node + ':' + str(CONTROL_PORT) + "/get_relays")
         if request.status_code == 200:
             try:
                 available_relays = [i.split(":") for i in request.text.split("\n")]
@@ -63,23 +48,36 @@ async def get_get_relays():
                         #print("New relay Added:")
                         #_relay.display()
             except Exception as e:
-                print("Error while fetching relays:")
-                print(str(e))
+                print("Error while fetching relays:\n", e)
                 continue
         else:
-            print(directory_node, " seems to be offline!")
+            print("Directory Node ", directory_node, " seems to be offline!")
             continue
 
 
-@app.get("/handshake", response_class=PlainTextResponse)
-async def get_handshake():
-    choose_relays()
+# select relays to form a circuit with
+def choose_relays():
+    global circuit
+
+    try:
+        circuit['guard'] = random.choice(relays['guard'])
+        circuit['middle'] = random.choice(relays['middle'])
+        circuit['exit'] = random.choice(relays['exit'])
+    except IndexError:
+        print("No relays found!")
+
+
+# exchange public keys & establish shared symmetric key
+def handshake():
     post_data = {"ip": IP, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     response = post("http://" + circuit['guard'].ip + ":8000/handshake", params=post_data)
 
 
-@app.get("/bootstrap", response_class=PlainTextResponse)
-async def get_bootstrap():
+# make the guard relay connect with the middle relay &
+# make the middle relay connect with the exit relay
+def bootstrap():
+
+    handshake()
 
     def pack3(data):
         data = data.encode('utf-8')
@@ -99,12 +97,24 @@ async def get_bootstrap():
 
         return data
 
-
-    server = "example.com"
+    server = "192.168.10.25"
     data = utils.encode(pack3(server))
-
-    print(circuit['guard'])
 
     post_data = {"ip": IP, "data": data}
     response = post("http://" + circuit['guard'].ip + ":8000/bootstrap", params=post_data)
- 
+
+def main():
+
+    get_relays()
+    #print("Relays fetched:")
+    #for i in relays:
+    #    for j in relays[i]:
+    #        j.display()
+
+    choose_relays()
+    #print("Relays chosen:", circuit)
+
+    bootstrap()
+    chat_client.connect(circuit['guard'].ip)
+
+main()
