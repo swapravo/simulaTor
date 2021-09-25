@@ -44,7 +44,7 @@ connection, addr = connection.accept()
 print("connected:", connection, addr)
 
 while True:
-    message = connection.recv(8).decode()
+    message = connection.recv(512).decode()
     print(message)
     if not message:
         break

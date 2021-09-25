@@ -27,8 +27,8 @@ def encrypt(key: bytes, message: bytes):
     return box.encrypt(message, nacl_random(SecretBox.NONCE_SIZE))
 
 def decrypt(key: bytes, message: bytes):
-	try:
-		box = SecretBox(key)
-		return box.decrypt(message)
-	except:
-		return b''
+	#try:
+	box = SecretBox(key)
+	return box.decrypt(message)
+	#except:
+	#return b''

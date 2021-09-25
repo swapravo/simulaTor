@@ -1,5 +1,7 @@
 import socket
-from sys import argv
+from base64 import b16decode
+
+from utils import crypto
 
 class router:
 
@@ -13,9 +15,10 @@ class router:
 
     BUFFER_SIZE = 512
 
-    def __init__(self, ip):
+    def __init__(self, ip, key):
 
         self.ROUTER_IP = ip
+        self.KEY = b16decode(key)
         self.ROUTER_INCOMING_PORT = 8001
         self.ROUTER_OUTGOING_PORT = 8002
 
@@ -40,7 +43,7 @@ class router:
 
         while True:
             self.request = self.CLIENT.recv(self.BUFFER_SIZE)
-            print(self.NAME, " Router recieved:", self.request)
+            print(self.ROUTER_IP, " Router recieved:", self.request)
             if not self.request:
                 print("No data recieved. Closing socket!")
                 break
@@ -66,16 +69,17 @@ class router:
 
     # do crypto & forward the data to the next router
     def forward(self):
-        # do_crypto()
+        print("ROUTER IP", self.ROUTER_IP)
+        print(self.request)
+        print()
+        print(self.KEY)
+        print()
+        self.request = crypto.decrypt(self.KEY, self.request)
+        print(self.request)
         self.SERVER_SOCKET.send(self.request)
 
     def fetch(self):
-        self.response = self.SERVER_SOCKET.recv(8)
+        self.response = self.SERVER_SOCKET.recv(self.BUFFER_SIZE)
+        self.response = crypto.encrypt(self.KEY, self.response)
         print("reply")
         print(self.response)
-
-
-#print("args supplied")
-#print(args)
-
-#r = router(argv[2])

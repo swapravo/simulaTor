@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
-from base64 import b64encode
+from base64 import b64encode, b16encode
 import time
 import subprocess
 
@@ -33,9 +33,9 @@ def get_register():
     return "Registered! as IP:" + str(IP) + ' as RELAY TYPE:' + RELAY_TYPE + '\n'
 
 
-def launch_router(server_ip):
+def launch_router(server_ip, key):
     print("entering launch router from exit")
-    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    subprocess.Popen(["python3", "relays/exit/r.py" , IP, b16encode(key), server_ip])
     print("exiting launch router from exit")  
     # give the router some time to start up
     time.sleep(3)
@@ -84,14 +84,23 @@ async def post_bootsrap(ip: str, data: str):
 
 
         # server that the client wants to connect to
-        data = crypto.decrypt(_client.symmetric_key, data).decode()
+        data = crypto.decrypt(_client.symmetric_key, data)
+        client_public_key, server_ip = utils.deserialise(data)
 
 
-        #print("AT EXIT")
+
+        client_public_key = crypto.decode_public_key(client_public_key)
+        client_key = crypto.generate_shared_secret(PRIVATE_KEY, client_public_key)
+
+        print("AT EXIT")
+        print("generated shared secret, exit, client")
+        print(client_key)
+        print()
         #print(data)
         #for i in connected_clients:
         #    connected_clients[i].display()
-        launch_router(data)
+        #launch_router(data)
+        launch_router(server_ip, client_key)
         print("leaving exit relay")
 
 

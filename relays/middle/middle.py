@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
-from base64 import b64encode
+from base64 import b64encode, b16encode
 import time
 import subprocess
 
@@ -56,9 +56,9 @@ async def post_handshake(ip: str, public_key: str):
     #_relay.display()
 
 
-def launch_router(server_ip):
+def launch_router(server_ip, key):
     print("entering launch router from middle")
-    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    subprocess.Popen(["python3", "relays/exit/r.py" , IP, b16encode(key), server_ip])
     print("exiting launch router from middle")  
     # give the router some time to start up
     time.sleep(3)
@@ -72,7 +72,8 @@ async def post_bootsrap(ip: str, data: str):
 
         # decode data
         data = utils.decode(data)
-
+        print("data decryption key")
+        print(connected_clients[ip].symmetric_key)
         # decrypt this data
         data = crypto.decrypt(connected_clients[ip].symmetric_key, data)
 
@@ -88,7 +89,13 @@ async def post_bootsrap(ip: str, data: str):
         data = crypto.decrypt(_client.symmetric_key, data)
 
         # deserialise data
-        next_server, data = utils.deserialise(data)
+        next_server, client_public_key, data = utils.deserialise(data)
+        # generate the client's symmetric key
+        client_public_key = crypto.decode_public_key(client_public_key)
+        client_key = crypto.generate_shared_secret(PRIVATE_KEY, client_public_key)
+        print("generated shared secret, client, middle")
+        print(client_key)
+        print()
 
         connected_clients[ip].next_server = next_server
         # Now exchange keys/handshake with the exit relay
@@ -126,9 +133,12 @@ async def post_bootsrap(ip: str, data: str):
 
 
         #print("AT MIDDLE")
+        #print("correct client")
+        #print(connected_clients[ip].display())
         #for i in connected_clients:
         #    connected_clients[i].display()
-        launch_router(connected_clients[ip].next_server)
+        #launch_router(connected_clients[ip].next_server)
+        launch_router(connected_clients[ip].next_server, client_key)
         print("leaving middle relay ")
 
 

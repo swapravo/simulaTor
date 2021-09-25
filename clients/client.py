@@ -79,14 +79,16 @@ def bootstrap():
 
     handshake()
 
-    def pack3(data):
-        data = data.encode('utf-8')
+    def pack3(server_ip):
+        #data = data.encode('utf-8')
+
+        data = utils.serialise([crypto.encode_public_key(PUBLIC_KEY), server_ip])
 
         # encrypt for exit relay
         data = crypto.encrypt(circuit['exit'].symmetric_key, data)
 
-        # tell midle relay about exit relay
-        data = utils.serialise([circuit['exit'].ip, data])
+        # tell midle relay about the exit relay & client's public key
+        data = utils.serialise([circuit['exit'].ip, crypto.encode_public_key(PUBLIC_KEY), data])
         # encrypt for middle relay
         data = crypto.encrypt(circuit['middle'].symmetric_key, data)        
 
@@ -115,6 +117,6 @@ def main():
     #print("Relays chosen:", circuit)
 
     bootstrap()
-    chat_client.connect(circuit['guard'].ip)
+    chat_client.connect(circuit['guard'].ip, circuit['guard'].symmetric_key, circuit['middle'].symmetric_key, circuit['exit'].symmetric_key)
 
 main()

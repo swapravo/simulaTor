@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from requests import get, post
-from base64 import b64encode
+from base64 import b64encode, b16encode
 import time
 import subprocess
 
@@ -56,9 +56,9 @@ async def post_handshake(ip: str, public_key: str):
     #client.display()
 
 
-def launch_router(server_ip):
+def launch_router(server_ip, key):
     print("entering launch router from guard")
-    subprocess.Popen(["python3", "relays/exit/r.py" , IP, server_ip])
+    subprocess.Popen(["python3", "relays/exit/r.py", IP, b16encode(key), server_ip])
     print("exiting launch router from guard")  
     # give the router some time to start up
     time.sleep(3)
@@ -120,7 +120,8 @@ async def post_bootsrap(ip: str, data: str):
         #print("AT GUARD")
         #for i in connected_clients:
         #    connected_clients[i].display()
-        launch_router(connected_clients[ip].next_server)
+        #launch_router(connected_clients[ip].next_server)
+        launch_router(connected_clients[ip].next_server, connected_clients[ip].symmetric_key)
         print("leaving guard relay")
 
 time.sleep(5)
