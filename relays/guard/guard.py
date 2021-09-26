@@ -6,7 +6,7 @@ import time
 import subprocess
 
 import main
-from utils import crypto, utils, router
+import utils.crypto as crypto, utils.utils as utils
 
 
 # these IPs & their public keys are pinned into the tor client
@@ -17,17 +17,15 @@ RELAY_TYPE = "guard"
 PUBLIC_KEY, PRIVATE_KEY = crypto.generate_asymmetric_keys()
 
 connected_clients = {}
-
 app = FastAPI(
-    #debug=True,
-    #docs_url=None,
-    #redoc_url=None,
-    #openapi_url=None,
-    )
+    debug=True,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
 
 
 # register yourself to the directory nodes
-#@app.get("/register", response_class=PlainTextResponse)
 def get_register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     for directory_node in DIRECTORY_NODES:
@@ -51,14 +49,10 @@ async def post_handshake(ip: str, public_key: str):
     client = utils.Client(ip=ip, public_key=public_key, symmetric_key=symmetric_key)
     connected_clients[ip] = client
 
-    #print("At guard")
-    #print("Client handshake completed:")
-    #client.display()
-
 
 def launch_router(server_ip, key):
     print("entering launch router from guard")
-    subprocess.Popen(["python3", "relays/exit/r.py", IP, b16encode(key), server_ip])
+    subprocess.Popen(["python3", "utils/router.py", IP, b16encode(key), server_ip])
     print("exiting launch router from guard")  
     # give the router some time to start up
     time.sleep(3)
@@ -80,9 +74,6 @@ async def post_bootsrap(ip: str, data: str):
         #print("data to be deserialised:", data)
         next_server, data = utils.deserialise(data)
         connected_clients[ip].next_server = next_server
-
-        #print("At guard:")
-        #print(next_server, data)
 
         # Now exchange keys/handshake with the middle relay
 
@@ -117,12 +108,7 @@ async def post_bootsrap(ip: str, data: str):
         post_data = {"ip": IP, "data": data}
         response = post("http://" + connected_clients[ip].next_server + ":8000/bootstrap", params=post_data)
 
-        #print("AT GUARD")
-        #for i in connected_clients:
-        #    connected_clients[i].display()
-        #launch_router(connected_clients[ip].next_server)
         launch_router(connected_clients[ip].next_server, connected_clients[ip].symmetric_key)
-        print("leaving guard relay")
 
 time.sleep(5)
 get_register()

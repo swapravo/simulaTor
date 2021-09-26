@@ -8,20 +8,11 @@ def connect(server_ip, guard_key, middle_key, exit_key):
     connection = socket.socket()
     connection.connect((server_ip, 8001))
 
-    print("client Connected to guard...")
-
-    print("guard key", guard_key)
-    print("middle_key", middle_key)
-    print("exit key", exit_key)
-
-
-    #print("guard key", guard_key)
-    #print("middle_key", middle_key)
-    #print("exit key", exit_key)
+    print("Client Connected to guard...")
 
     while True:
 
-        message = "12345678"
+        message = input("Me>>>")
         message = message.encode()
         message = crypto.encrypt(exit_key, message)
         message = crypto.encrypt(middle_key, message)

@@ -45,8 +45,6 @@ def get_relays():
                     _relay = utils.Relay(ip=ip, public_key=public_key, symmetric_key=symmetric_key, relay_type=relay_type)
                     if _relay not in relays[relay_type]:
                         relays[relay_type].append(_relay)
-                        #print("New relay Added:")
-                        #_relay.display()
             except Exception as e:
                 print("Error while fetching relays:\n", e)
                 continue
@@ -70,7 +68,7 @@ def choose_relays():
 # exchange public keys & establish shared symmetric key
 def handshake():
     post_data = {"ip": IP, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
-    response = post("http://" + circuit['guard'].ip + ":8000/handshake", params=post_data)
+    response = post("http://" + circuit['guard'].ip + ":" + str(CONTROL_PORT) + "/handshake", params=post_data)
 
 
 # make the guard relay connect with the middle relay &
@@ -80,10 +78,8 @@ def bootstrap():
     handshake()
 
     def pack3(server_ip):
-        #data = data.encode('utf-8')
 
         data = utils.serialise([crypto.encode_public_key(PUBLIC_KEY), server_ip])
-
         # encrypt for exit relay
         data = crypto.encrypt(circuit['exit'].symmetric_key, data)
 
@@ -103,20 +99,14 @@ def bootstrap():
     data = utils.encode(pack3(server))
 
     post_data = {"ip": IP, "data": data}
-    response = post("http://" + circuit['guard'].ip + ":8000/bootstrap", params=post_data)
+    response = post("http://" + circuit['guard'].ip + ":" + str(CONTROL_PORT) + "/bootstrap", params=post_data)
 
 def main():
 
     get_relays()
-    #print("Relays fetched:")
-    #for i in relays:
-    #    for j in relays[i]:
-    #        j.display()
-
     choose_relays()
-    #print("Relays chosen:", circuit)
-
     bootstrap()
+
     chat_client.connect(circuit['guard'].ip, circuit['guard'].symmetric_key, circuit['middle'].symmetric_key, circuit['exit'].symmetric_key)
 
 main()

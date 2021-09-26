@@ -1,7 +1,9 @@
 import socket
+from sys import argv
 from base64 import b16decode
 
-from utils import crypto
+import crypto
+
 
 class router:
 
@@ -14,6 +16,7 @@ class router:
     SERVER_PORT = 8001
 
     BUFFER_SIZE = 512
+
 
     def __init__(self, ip, key):
 
@@ -32,6 +35,7 @@ class router:
         self.SERVER_SOCKET.bind((self.ROUTER_IP, self.ROUTER_OUTGOING_PORT))
 
         print("Router ", self.NAME, " ONLINE at IP:", self.ROUTER_IP, " PORT: ", self.ROUTER_INCOMING_PORT)
+
 
     # keep on recieving data
     def listen(self):
@@ -69,17 +73,18 @@ class router:
 
     # do crypto & forward the data to the next router
     def forward(self):
-        print("ROUTER IP", self.ROUTER_IP)
-        print(self.request)
-        print()
-        print(self.KEY)
-        print()
         self.request = crypto.decrypt(self.KEY, self.request)
-        print(self.request)
         self.SERVER_SOCKET.send(self.request)
+
 
     def fetch(self):
         self.response = self.SERVER_SOCKET.recv(self.BUFFER_SIZE)
         self.response = crypto.encrypt(self.KEY, self.response)
-        print("reply")
-        print(self.response)
+
+self_ip = argv[1]
+key = argv[2]
+server_ip = argv[3]
+
+Router = router(self_ip, key)
+Router.connect(server_ip)
+Router.listen()

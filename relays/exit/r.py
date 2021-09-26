@@ -1,9 +1,6 @@
 from sys import argv
 from utils import router
 
-print("supplied args:")
-print(argv)
-
 self_ip = argv[1]
 key = argv[2]
 server_ip = argv[3]

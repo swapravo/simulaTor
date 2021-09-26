@@ -6,7 +6,7 @@ import time
 import subprocess
 
 import main
-from utils import crypto, utils, router
+import utils.crypto as crypto, utils.utils as utils
 
 
 # these IPs & their public keys are pinned into the tor client
@@ -18,14 +18,13 @@ PUBLIC_KEY, PRIVATE_KEY = crypto.generate_asymmetric_keys()
 
 connected_clients = {}
 app = FastAPI(
-    #debug=True,
-    #docs_url=None,
-    #redoc_url=None,
-    #openapi_url=None,
+    debug=True,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # register yourself to the directory nodes
-#@app.get("/register", response_class=PlainTextResponse)
 def get_register():
     post_data = {"ip": IP, "relay_type": RELAY_TYPE, "public_key": crypto.encode_public_key(PUBLIC_KEY)}
     for directory_node in DIRECTORY_NODES:
@@ -35,7 +34,7 @@ def get_register():
 
 def launch_router(server_ip, key):
     print("entering launch router from exit")
-    subprocess.Popen(["python3", "relays/exit/r.py" , IP, b16encode(key), server_ip])
+    subprocess.Popen(["python3", "utils/router.py" , IP, b16encode(key), server_ip])
     print("exiting launch router from exit")  
     # give the router some time to start up
     time.sleep(3)
@@ -56,10 +55,6 @@ async def post_handshake(ip: str, public_key: str):
 
     _relay = utils.Relay(ip=ip, public_key=public_key, symmetric_key=symmetric_key, relay_type='middle') # only middle relays connect to exit relays
     connected_clients[ip] = _relay
-
-    #print("at exit")
-    #print("Relay handshake completed:")
-    #_relay.display()
 
 
 # create circuit
@@ -82,27 +77,13 @@ async def post_bootsrap(ip: str, data: str):
         # remember this client's keys
         _client = utils.Client(public_key=_public_key, symmetric_key=_symmetric_key)
 
-
         # server that the client wants to connect to
         data = crypto.decrypt(_client.symmetric_key, data)
         client_public_key, server_ip = utils.deserialise(data)
 
-
-
         client_public_key = crypto.decode_public_key(client_public_key)
         client_key = crypto.generate_shared_secret(PRIVATE_KEY, client_public_key)
-
-        print("AT EXIT")
-        print("generated shared secret, exit, client")
-        print(client_key)
-        print()
-        #print(data)
-        #for i in connected_clients:
-        #    connected_clients[i].display()
-        #launch_router(data)
         launch_router(server_ip, client_key)
-        print("leaving exit relay")
-
 
 time.sleep(5)
 get_register()
