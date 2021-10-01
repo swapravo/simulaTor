@@ -33,9 +33,7 @@ def get_register():
 
 
 def launch_router(server_ip, key):
-    print("entering launch router from exit")
     subprocess.Popen(["python3", "utils/router.py" , IP, b16encode(key), server_ip])
-    print("exiting launch router from exit")  
     # give the router some time to start up
     time.sleep(3)
 

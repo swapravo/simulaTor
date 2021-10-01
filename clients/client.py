@@ -1,4 +1,5 @@
 from requests import get, post
+from sys import exit
 import random
 import socket
 import time
@@ -57,12 +58,9 @@ def get_relays():
 def choose_relays():
     global circuit
 
-    try:
-        circuit['guard'] = random.choice(relays['guard'])
-        circuit['middle'] = random.choice(relays['middle'])
-        circuit['exit'] = random.choice(relays['exit'])
-    except IndexError:
-        print("No relays found!")
+    circuit['guard'] = random.choice(relays['guard'])
+    circuit['middle'] = random.choice(relays['middle'])
+    circuit['exit'] = random.choice(relays['exit'])
 
 
 # exchange public keys & establish shared symmetric key
@@ -103,10 +101,51 @@ def bootstrap():
 
 def main():
 
-    get_relays()
-    choose_relays()
-    bootstrap()
+    print('\n\n')
+    print('*' * 80)
+    print("### Connecting to simulaTor...")
+    print('*' * 80, '\n')
 
-    chat_client.connect(circuit['guard'].ip, circuit['guard'].symmetric_key, circuit['middle'].symmetric_key, circuit['exit'].symmetric_key)
+    print("### Fetching relay information from Directory Nodes: ", DIRECTORY_NODES[0], ",", DIRECTORY_NODES[1], '\n')
+    try:
+        get_relays()
+    except:
+        print("### Directory Nodes Offline!")
+        exit(0)
+    else:
+        print("### Relays fetched:\n")
+        for i in relays:
+            for j in relays[i]:
+                j.display()
+
+
+    print("### Choosing Relays to form a circuit...")
+    try:
+        choose_relays()
+    except IndexError:
+        print("### No relays found!")
+        exit(0)
+    else:
+        print("Relays Chosen:\n")
+        for i in circuit:
+            circuit[i].display()
+
+
+    try:
+        print("Bootstraping...\n")
+        bootstrap()
+    except:
+        print("Bootstraping has not finished yet!")
+    else:
+        print("Bootstraping Finished...")
+
+    print("Launching Client Application...\n\n")
+
+
+    try:
+        chat_client.connect(circuit['guard'].ip, circuit['guard'].symmetric_key, circuit['middle'].symmetric_key, circuit['exit'].symmetric_key)
+    except KeyboardInterrupt:
+        # close the socket connection here
+        print("\nCaptured SIGINT. Quiting...")
 
 main()

@@ -1,6 +1,8 @@
 import socket
-from sys import argv
+from sys import argv, exit
 from base64 import b16decode
+from os import getpid, kill
+from signal import SIGTERM
 
 import crypto
 
@@ -19,7 +21,6 @@ class router:
 
 
     def __init__(self, ip, key):
-
         self.ROUTER_IP = ip
         self.KEY = b16decode(key)
         self.ROUTER_INCOMING_PORT = 8001
@@ -34,7 +35,7 @@ class router:
         self.CLIENT_SOCKET.bind((self.ROUTER_IP, self.ROUTER_INCOMING_PORT))
         self.SERVER_SOCKET.bind((self.ROUTER_IP, self.ROUTER_OUTGOING_PORT))
 
-        print("Router ", self.NAME, " ONLINE at IP:", self.ROUTER_IP, " PORT: ", self.ROUTER_INCOMING_PORT)
+        print("Router ONLINE at IP:", self.ROUTER_IP, " PORT: ", self.ROUTER_INCOMING_PORT)
 
 
     # keep on recieving data
@@ -43,14 +44,15 @@ class router:
 
         while self.CLIENT is None:
             self.CLIENT, self.CLIENT_ADDRESS = self.CLIENT_SOCKET.accept()
-            print("Got connection: ", self.CLIENT, self.CLIENT_ADDRESS)
+            print("Router", self.ROUTER_IP, "GOT CONNECTION from IP ", self.CLIENT_ADDRESS[0])
 
         while True:
             self.request = self.CLIENT.recv(self.BUFFER_SIZE)
-            print(self.ROUTER_IP, " Router recieved:", self.request)
             if not self.request:
-                print("No data recieved. Closing socket!")
-                break
+                print("No data recieved. Shutting Down Router!")
+                # close socket
+                kill(getpid(), SIGTERM)
+                
 
             # forward request
             self.forward()
@@ -59,16 +61,17 @@ class router:
             # send reply back
             self.CLIENT.send(self.response)
             if not self.response:
-                print("No data recieved. Closing socket!")
-                break
+                print("No data recieved. Shutting Down Router!")
+                # close socket
+                kill(getpid(), SIGTERM)
 
 
     # connect to the next router on the network
     def connect(self, server_ip):
         self.SERVER_IP = server_ip
-        print("Connecting to ", self.SERVER_IP, "from", self.ROUTER_IP, "...")
+        print("Router", self.ROUTER_IP, "connecting to", self.SERVER_IP)
         self.SERVER_SOCKET.connect((self.SERVER_IP, self.SERVER_PORT))
-        print("Connected to ", self.SERVER_IP, "from", self.ROUTER_IP)
+        print("Router", self.ROUTER_IP, "connected to", self.SERVER_IP)
 
 
     # do crypto & forward the data to the next router
@@ -77,9 +80,11 @@ class router:
         self.SERVER_SOCKET.send(self.request)
 
 
+    # fetch the reply & do crypto
     def fetch(self):
         self.response = self.SERVER_SOCKET.recv(self.BUFFER_SIZE)
         self.response = crypto.encrypt(self.KEY, self.response)
+
 
 self_ip = argv[1]
 key = argv[2]
@@ -88,3 +93,4 @@ server_ip = argv[3]
 Router = router(self_ip, key)
 Router.connect(server_ip)
 Router.listen()
+

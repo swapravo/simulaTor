@@ -52,9 +52,8 @@ async def post_handshake(ip: str, public_key: str):
 
 
 def launch_router(server_ip, key):
-    print("entering launch router from middle")
-    subprocess.Popen(["python3", "utils/router.py" , IP, b16encode(key), server_ip])
-    print("exiting launch router from middle")  
+    subprocess.Popen(["python3", "utils/router.py" , IP, b16encode(key), server_ip]) 
+    
     # give the router some time to start up
     time.sleep(3)
 
@@ -67,8 +66,6 @@ async def post_bootsrap(ip: str, data: str):
 
         # decode data
         data = utils.decode(data)
-        print("data decryption key")
-        print(connected_clients[ip].symmetric_key)
         # decrypt this data
         data = crypto.decrypt(connected_clients[ip].symmetric_key, data)
 

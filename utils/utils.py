@@ -1,5 +1,5 @@
 from msgpack import packb, unpackb
-from base64 import b64encode, b64decode
+from base64 import b64encode, b64decode, b16encode
 
 
 class Client:
@@ -11,8 +11,8 @@ class Client:
 
     def display(self):
         print("IP: ", self.ip)
-        print("Public Key: ", self.public_key)
-        print("Symmetric Key: ", self.symmetric_key)
+        print("Public Key: ", b16encode(bytes(self.public_key)).decode())
+        print("Symmetric Key: ", b16encode(bytes(self.symmetric_key)).decode())
         print("Next Server: ", self.next_server)
         print()
 
