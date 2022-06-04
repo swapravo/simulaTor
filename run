@@ -24,15 +24,16 @@
 # CLIENT: 192.168.10.19
 
 
+# repalce wlp1so with the interface that you wish to use
 # free up these IPs if busy
 for i in $(seq 10 30)
 do
-    ifconfig wlan0:$i 192.168.10.$i down;
+    ifconfig wlp1s0:$i 192.168.10.$i down;
 done
-# set up IPs for nodes
+ set up IPs for nodes
 for i in $(seq 10 30)
 do
-    ifconfig wlan0:$i 192.168.10.$i up;
+    ifconfig wlp1s0:$i 192.168.10.$i up;
 done
 
 
